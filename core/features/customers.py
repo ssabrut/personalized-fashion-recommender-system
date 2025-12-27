@@ -30,3 +30,9 @@ class DatasetSampler:
         )
 
         return {"customers": customer_df, "transactions": transaction_df}
+
+def fill_missing_club_member_status(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_columns(pl.col("club_member_status").fill_null("ABSENT"))
+
+def drop_na_age(df: pl.DataFrame) -> pl.DataFrame:
+    return df.drop_nulls(subset=["age"])
