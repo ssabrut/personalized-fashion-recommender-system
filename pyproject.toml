@@ -1,0 +1,17 @@
+[project]
+name = "personalized-fashion-recommender-system"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "langchain>=1.2.0",
+    "langchain-community>=0.4.1",
+    "langchain-core>=1.2.5",
+    "loguru>=0.7.3",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "polars>=1.36.1",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.12.0",
+]
