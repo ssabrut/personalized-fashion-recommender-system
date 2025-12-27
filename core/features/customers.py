@@ -36,3 +36,20 @@ def fill_missing_club_member_status(df: pl.DataFrame) -> pl.DataFrame:
 
 def drop_na_age(df: pl.DataFrame) -> pl.DataFrame:
     return df.drop_nulls(subset=["age"])
+
+def create_age_group() -> pl.Expr:
+    return (
+        pl.when(pl.col("age").is_between(0, 18))
+        .then(pl.lit("0-18"))
+        .when(pl.col("age").is_between(19, 25))
+        .then(pl.lit("19-25"))
+        .when(pl.col("age").is_between(26, 35))
+        .then(pl.lit("26-35"))
+        .when(pl.col("age").is_between(36, 45))
+        .then(pl.lit("36-45"))
+        .when(pl.col("age").is_between(46, 55))
+        .then(pl.lit("46-55"))
+        .when(pl.col("age").is_between(56, 65))
+        .then(pl.lit("56-65"))
+        .otherwise(pl.lit("66+"))
+    ).alias("age_group")
