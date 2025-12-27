@@ -53,3 +53,27 @@ def create_age_group() -> pl.Expr:
         .then(pl.lit("56-65"))
         .otherwise(pl.lit("66+"))
     ).alias("age_group")
+
+def compute_feature_customers(
+    df: pl.DataFrame, drop_null_age: bool = False
+) -> pl.DataFrame:
+    required_columns = ["customer_id", "club_member_status", "age", "postal_code"]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(
+            f"Columns {', '.join(missing_columns)} not found in the DataFrame"
+        )
+
+    df = (
+        df.pipe(fill_missing_club_member_status)
+        .pipe(drop_na_age)
+        .with_columns([create_age_group(), pl.col("age").cast(pl.Float64)])
+        .select(
+            ["customer_id", "club_member_status", "age", "postal_code", "age_group"]
+        )
+    )
+
+    if drop_null_age is True:
+        df = df.drop_nulls(subset=["age"])
+
+    return df
