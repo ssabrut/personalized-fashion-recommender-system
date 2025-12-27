@@ -1,5 +1,10 @@
+import sys
+import io
+import contextlib
+from tqdm import tqdm
 import polars as pl
 from typing import Any
+from langchain_community.embeddings import DeepInfraEmbeddings
 
 def get_article_id(df: pl.DataFrame) -> pl.Series:
     return df["article_id"].cast(pl.Utf8)
@@ -43,3 +48,31 @@ def compute_features_articles(df: pl.DataFrame) -> pl.DataFrame:
     existing_columns = df.columns
     columns_to_keep = [col for col in existing_columns if col not in columns_to_drop]
     return df.select(columns_to_keep)
+
+def generate_embedding_for_dataframe(df: pl.DataFrame, text_column: str, model: DeepInfraEmbeddings, batch_size: int = 32) -> pl.DataFrame:
+    @contextlib.contextmanager
+    def suppress_stdout():
+        new_stdout = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = new_stdout
+
+        try:
+            yield new_stdout
+        finally:
+            sys.stdout = old_stdout
+
+    total_rows = len(df)
+    pbar = tqdm(total=total_rows, desc="Generating embeddings")
+    texts = df[text_column].to_list()
+
+    all_embeddings = []
+    for i in range(0, len(texts), batch_size):
+        batch_texts = texts[i:i+batch_size]
+        with suppress_stdout():
+            batch_embeddings = model.embed_documents(batch_texts)
+        all_embeddings.extend(batch_embeddings)
+        pbar.update(len(batch_texts))
+
+    df_with_embeddings = df.with_columns(embeddings=pl.Series(all_embeddings))
+    pbar.close()
+    return df_with_embeddings
