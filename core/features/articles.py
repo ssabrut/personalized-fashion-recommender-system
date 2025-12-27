@@ -1,4 +1,5 @@
 import polars as pl
+from typing import Any
 
 def get_article_id(df: pl.DataFrame) -> pl.Series:
     return df["article_id"].cast(pl.Utf8)
@@ -6,7 +7,7 @@ def get_article_id(df: pl.DataFrame) -> pl.Series:
 def create_prod_name_length(df: pl.DataFrame) -> pl.Series:
     return df["prod_name"].str.len_chars()
 
-def create_article_description(row):
+def create_article_description(row: pl.Series) -> str:
     description = f"{row['prod_name']} - {row['product_type_name']} in {row['product_group_name']}"
     description += f"\nAppearance: {row['graphical_appearance_name']}"
     description += f"\nColor: {row['perceived_colour_value_name']} {row['perceived_colour_master_name']} ({row['colour_group_name']})"
@@ -17,3 +18,28 @@ def create_article_description(row):
 
     return description
 
+def get_image_url(article_id: Any) -> str:
+    url_start = "https://repo.hops.works/dev/jdowling/h-and-m/images/0"
+    article_id_str = str(article_id)
+    folder = article_id_str[:2]
+    image_name = article_id_str
+    return f"{url_start}{folder}/0{image_name}.jpg"
+
+def compute_features_articles(df: pl.DataFrame) -> pl.DataFrame:
+    df = df.with_columns(
+        [
+            get_article_id(df).alias("article_id"),
+            create_prod_name_length(df).alias("prod_name_length"),
+            pl.struct(df.columns)
+                .map_elements(create_article_description)
+                .alias("article_description")
+        ]
+    )
+
+    df = df.with_columns(image_url=pl.col("article_id").map_elements(get_image_url))
+    df = df.select([col for col in df.columns if not df[col].is_null().any()])
+
+    columns_to_drop = ["detail_desc", "detail_desc_length"]
+    existing_columns = df.columns
+    columns_to_keep = [col for col in existing_columns if col not in columns_to_drop]
+    return df.select(columns_to_keep)
