@@ -9,6 +9,7 @@ dependencies = [
     "fastapi[standard]>=0.115.6",
     "hopsworks[python]>=3.0.5",
     "isort>=7.0.0",
+    "joblib>=1.5.3",
     "langchain>=1.2.0",
     "langchain-community>=0.4.1",
     "langchain-core>=1.2.5",
