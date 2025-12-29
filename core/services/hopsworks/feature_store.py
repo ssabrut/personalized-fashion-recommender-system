@@ -1,5 +1,6 @@
 import hopsworks
 import pandas as pd
+from hsfs import embedding
 
 from core.config import settings
 from core import constants
@@ -29,3 +30,25 @@ def create_customers_feature_group(fs, df: pd.DataFrame, online_enabled: bool = 
         customers_fg.update_feature_description(desc["name"], desc["description"])
 
     return customers_fg
+
+def create_articles_feature_group(
+    fs,
+    df: pd.DataFrame,
+    articles_description_embedding_dim: int,
+    online_enabled: bool = True
+):
+    embedding_index = embedding.EmbeddingIndex()
+    embedding_index.add_embedding("embeddings", articles_description_embedding_dim)
+
+    articles_fg = fs.get_or_create_feature_group(
+        name="articles",
+        version=1,
+        description="Fashion items data including type of item, visual description and category",
+        primary_key=["article_id"],
+        online_enabled=online_enabled,
+        features=constants.ARTICLE_FEATURE_DESCRIPTION,
+        embedding_index=embedding_index
+    )
+
+    articles_fg.insert(df, wait=True)
+    return articles_fg
