@@ -52,3 +52,24 @@ def create_articles_feature_group(
 
     articles_fg.insert(df, wait=True)
     return articles_fg
+
+def create_interactions_feature_group(
+    fs, df: pd.DataFrame, online_enabled: bool = True
+):
+    interactions_fg = fs.get_or_create_feature_group(
+        name="interactions",
+        version=1,
+        description="Customer interactions with articles inculding purchases, clicks and ignores. Used for building recommendation systems and analyzing user behavior",
+        primary_key=["customer_id", "article_id"],
+        online_enabled=online_enabled,
+        event_time="t_dat"
+    )
+
+    interactions_fg.insert(
+        df,
+        wait=True
+    )
+
+    for desc in constants.INTERACTIONS_FEATURES_DESCRIPTIONS:
+        interactions_fg.update_feature_description(desc["name"], desc["description"])
+    return interactions_fg
