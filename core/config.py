@@ -1,14 +1,16 @@
 from enum import Enum
 from pathlib import Path
-from typing import Literal
-from pydantic import SecretStr, Field
-from typing import ClassVar
+from typing import ClassVar, Literal
+
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class CustomerDatasetSize(Enum):
     LARGE: str = "LARGE"
     MEDIUM: str = "MEDIUM"
     SMALL: str = "SMALL"
+
 
 class DefaultSettings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
@@ -52,6 +54,7 @@ class Settings(DefaultSettings):
     # Inference
     RANKING_MODEL_TYPE: Literal["ranking", "llmranking"] = "ranking"
     CUSTOM_HOPSWORKS_INFERENCE_ENV: str = "custom_env_name"
+
 
 def get_settings() -> Settings:
     return Settings()

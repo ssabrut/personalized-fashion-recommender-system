@@ -1,14 +1,16 @@
 import random
-import polars as pl
 from typing import Dict
 
+import polars as pl
+
 from core.config import CustomerDatasetSize
+
 
 class DatasetSampler:
     _SIZES = {
         CustomerDatasetSize.LARGE: 50_000,
         CustomerDatasetSize.MEDIUM: 5_000,
-        CustomerDatasetSize.SMALL: 1_000
+        CustomerDatasetSize.SMALL: 1_000,
     }
 
     def __init__(self, size: CustomerDatasetSize) -> None:
@@ -31,11 +33,14 @@ class DatasetSampler:
 
         return {"customers": customer_df, "transactions": transaction_df}
 
+
 def fill_missing_club_member_status(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns(pl.col("club_member_status").fill_null("ABSENT"))
 
+
 def drop_na_age(df: pl.DataFrame) -> pl.DataFrame:
     return df.drop_nulls(subset=["age"])
+
 
 def create_age_group() -> pl.Expr:
     return (
@@ -53,6 +58,7 @@ def create_age_group() -> pl.Expr:
         .then(pl.lit("56-65"))
         .otherwise(pl.lit("66+"))
     ).alias("age_group")
+
 
 def compute_feature_customers(
     df: pl.DataFrame, drop_null_age: bool = False

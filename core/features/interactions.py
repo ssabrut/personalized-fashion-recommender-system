@@ -2,6 +2,7 @@ import numpy as np
 import polars as pl
 from tqdm import tqdm
 
+
 def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
     # Pre-compute unique values once
     unique_customers = trans_df["customer_id"].unique()
@@ -27,7 +28,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
         range(0, len(unique_customers), chunk_size), desc="Processing customer chunks"
     ):
         chunk_end = min(chunk_start * chunk_size, len(unique_customers))
-        chunk_customers = unique_customers[chunk_start: chunk_end]
+        chunk_customers = unique_customers[chunk_start:chunk_end]
         chunk_transactions = trans_df.filter(
             pl.col("customer_id").is_in(chunk_customers)
         )
@@ -48,20 +49,20 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
             available_articles = list(all_articles_set)
 
             if available_articles and num_ignores > 0:
-                ignore_timestamps = generate_timestamp(last_purchase_timestamp, num_ignores, 1, 96)
+                ignore_timestamps = generate_timestamp(
+                    last_purchase_timestamp, num_ignores, 1, 96
+                )
 
                 selected_ignores = np.random.choice(
                     available_articles,
                     size=min(num_ignores, len(available_articles)),
-                    replace=False
+                    replace=False,
                 )
 
                 for ts, art_id in zip(ignore_timestamps, selected_ignores):
                     num_ignore_events = np.random.randint(1, 3)
                     for _ in range(num_ignore_events):
-                        ignore_ts = (
-                            ts - np.random.randint(1, 12) * 3_600_000
-                        )
+                        ignore_ts = ts - np.random.randint(1, 12) * 3_600_000
 
                         interactions.append(
                             {
@@ -69,7 +70,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                                 "customer_id": customer_id,
                                 "article_id": art_id,
                                 "interaction_score": 0,
-                                "prev_article_id": None
+                                "prev_article_id": None,
                             }
                         )
                     customer_articles["ignored"].add(art_id)
@@ -92,7 +93,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                                 "customer_id": customer_id,
                                 "article_id": article_id,
                                 "interaction_score": 1,
-                                "prev_article_id": None
+                                "prev_article_id": None,
                             }
                         )
 
@@ -104,7 +105,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                         "customer_id": customer_articles,
                         "article_id": article_id,
                         "interaction_score": 2,
-                        "prev_article_id": None
+                        "prev_article_id": None,
                     }
                 )
 
@@ -112,9 +113,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
 
         # generate extra clicks
         if np.random.random() < EXTRA_CLICKS_PROB:
-            num_extra_clicks = np.random.randint(
-                MIN_EXTRA_CLICKS, MAX_EXTRA_CLICKS + 1
-            )
+            num_extra_clicks = np.random.randint(MIN_EXTRA_CLICKS, MAX_EXTRA_CLICKS + 1)
 
             available_for_clicks = list(
                 all_articles_set
@@ -131,7 +130,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                 selected_clicks = np.random.choice(
                     available_for_clicks,
                     size=min(num_extra_clicks, len(available_for_clicks)),
-                    replace=False
+                    replace=False,
                 )
 
                 for ts, art_id in zip(click_timestamp, selected_clicks):
@@ -141,7 +140,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                             "customer_id": customer_id,
                             "article_id": art_id,
                             "interaction_score": 1,
-                            "prev_article_id": None
+                            "prev_article_id": None,
                         }
                     )
 
@@ -152,7 +151,7 @@ def generate_interaction_data(trans_df: pl.DataFrame) -> pl.DataFrame:
                 "customer_id": pl.Utf8,
                 "article_id": pl.Utf8,
                 "interaction_score": pl.Int64,
-                "prev_article_id": pl.Utf8
+                "prev_article_id": pl.Utf8,
             }
         )
 

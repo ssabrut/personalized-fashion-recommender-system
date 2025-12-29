@@ -1,10 +1,12 @@
 import pandas as pd
 import tensorflow as tf
 
+
 def preprocess(train_df: pd.DataFrame, candidate_features: list) -> pd.DataFrame:
     item_df = train_df[candidate_features]
     item_df.drop_duplicates(subset="article_id", inplace=True)
     return item_df
+
 
 def embed(df: pd.DataFrame, candidate_model) -> pd.DataFrame:
     ds = tf.data.Dataset.from_tensor_slices({col: df[col] for col in df})
