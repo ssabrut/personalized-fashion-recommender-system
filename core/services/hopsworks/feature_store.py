@@ -91,3 +91,25 @@ def create_raking_feature_group(
         rank_fg.update_feature_description(desc["name"], desc["description"])
 
     return rank_fg
+
+def create_candidate_embeddings_feature_group(
+    fs, df: pd.DataFrame, online_enabled: bool = True
+):
+    embedding_index = embedding.EmbeddingIndex()
+    embedding_index.add_embedding(
+        "embeddings",
+        settings.TWO_TOWER_MODEL_EMBEDDING_SIZE
+    )
+
+    candidate_embeddings_fg = fs.get_or_create_feature_group(
+        name="candidate_embeddings",
+        embedding_index=embedding_index,
+        primary_key=["article_id"],
+        version=1,
+        description="Embeddings for each article",
+        online_enabled=online_enabled
+    )
+
+    candidate_embeddings_fg.insert(df, wait=True)
+    return candidate_embeddings_fg
+
