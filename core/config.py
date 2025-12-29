@@ -55,6 +55,4 @@ class Settings(DefaultSettings):
     RANKING_MODEL_TYPE: Literal["ranking", "llmranking"] = "ranking"
     CUSTOM_HOPSWORKS_INFERENCE_ENV: str = "custom_env_name"
 
-
-def get_settings() -> Settings:
-    return Settings()
+settings = Settings()
