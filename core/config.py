@@ -30,7 +30,7 @@ class Settings(DefaultSettings):
     HOPSWORKS_API_KEY: SecretStr | None = Field(..., env="HOPSWORKS_API_KEY")
 
     # DeepInfra config
-    DEEPINFRA_API_KEY: SecretStr | None = Field(..., env="DEEPINFRA_API_KEY")
+    DEEPINFRA_API_TOKEN: SecretStr | None = Field(..., env="DEEPINFRA_API_TOKEN")
     DEEPINFRA_MODEL_ID: str = "openai/gpt-oss-120b"
 
     CUSTOMER_DATA_SIZE: CustomerDatasetSize = CustomerDatasetSize.LARGE
