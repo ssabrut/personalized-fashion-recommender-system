@@ -1707,6 +1707,7 @@ dependencies = [
     { name = "hopsworks" },
     { name = "isort" },
     { name = "joblib" },
+    { name = "keras" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
@@ -1719,6 +1720,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "scikit-learn" },
     { name = "tensorflow" },
+    { name = "tensorflow-recommenders" },
     { name = "tqdm" },
 ]
 
@@ -1730,6 +1732,7 @@ requires-dist = [
     { name = "hopsworks", extras = ["python"], specifier = ">=3.0.5" },
     { name = "isort", specifier = ">=7.0.0" },
     { name = "joblib", specifier = ">=1.5.3" },
+    { name = "keras", specifier = ">=3.12.0" },
     { name = "langchain", specifier = ">=1.2.0" },
     { name = "langchain-community", specifier = ">=0.4.1" },
     { name = "langchain-core", specifier = ">=1.2.5" },
@@ -1742,6 +1745,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "scikit-learn", specifier = ">=1.7.2" },
     { name = "tensorflow", specifier = ">=2.20.0" },
+    { name = "tensorflow-recommenders", specifier = ">=0.7.2" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
@@ -2507,6 +2511,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ff/07/ea91ac67a9fd36d3372099f5a3e69860ded544f877f5f2117802388f4212/tensorflow-2.20.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:02a0293d94f5c8b7125b66abf622cc4854a33ae9d618a0d41309f95e091bbaea", size = 259307122, upload-time = "2025-08-13T16:50:47.909Z" },
     { url = "https://files.pythonhosted.org/packages/e5/9e/0d57922cf46b9e91de636cd5b5e0d7a424ebe98f3245380a713f1f6c2a0b/tensorflow-2.20.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7abd7f3a010e0d354dc804182372779a722d474c4d8a3db8f4a3f5baef2a591e", size = 620425510, upload-time = "2025-08-13T16:51:02.608Z" },
     { url = "https://files.pythonhosted.org/packages/74/b5/d40e1e389e07de9d113cf8e5d294c04d06124441d57606febfd0fb2cf5a6/tensorflow-2.20.0-cp310-cp310-win_amd64.whl", hash = "sha256:4a69ac2c2ce20720abf3abf917b4e86376326c0976fcec3df330e184b81e4088", size = 331664937, upload-time = "2025-08-13T16:51:17.719Z" },
+]
+
+[[package]]
+name = "tensorflow-recommenders"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "absl-py" },
+    { name = "tensorflow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/bc/44a89ab491973736eba5fb667c59c46437b483c465b9bcde3dbcaed500e8/tensorflow-recommenders-0.7.2.tar.gz", hash = "sha256:67904def15ef9ff1ba5b9ca96ca32845ec54ec41b5be24e80883ad2bea8abc4b", size = 59848, upload-time = "2022-09-29T22:04:11.432Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/3a/5f0c0c04fc69a95231829f4cc9d93f2109b5a2e0f84f5c15ff4a828a19a7/tensorflow_recommenders-0.7.2-py3-none-any.whl", hash = "sha256:3f7cd18e63ade94d5c2c9e5ec35243f41905f713966dd2c9d76a14c48fd7e746", size = 89262, upload-time = "2022-09-29T22:04:10.095Z" },
 ]
 
 [[package]]
