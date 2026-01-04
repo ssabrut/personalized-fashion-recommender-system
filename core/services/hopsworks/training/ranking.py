@@ -15,3 +15,66 @@ class RankingModelFactory:
             use_best_model=True
         )
 
+class RankingModelTrainer:
+    def __init__(self, model, train_dataset, eval_dataset) -> None:
+        self._model = model
+
+        self._X_train, self._y_train = train_dataset
+        self._X_val, self._y_val = eval_dataset
+        self._train_dataset, self._eval_dataset = self._initialize_dataset(train_dataset, eval_dataset)
+
+    def _initialize_dataset(self, train_dataset, eval_dataset):
+        X_train, y_train = train_dataset
+        X_val, y_val = eval_dataset
+
+        cat_feature = list(X_train.select_dtypes(include=["string", "object"]).columns)
+
+        pool_train = Pool(X_train, y_train, cat_features=cat_feature)
+        pool_val = Pool(X_val, y_val, cat_features=cat_feature)
+        return pool_train, pool_val
+
+    def get_model(self):
+        return self._model
+
+    def fit(self):
+        self._model.fit(
+            self._train_dataset,
+            eval_set=self._eval_dataset
+        )
+
+        return self._model
+
+    def evaluate(self, log: bool = False):
+        preds = self._model.predict(self._eval_dataset)
+
+        precision, recall, fscore = precision_recall_fscore_support(
+            self._y_val, preds, average="binary"
+        )
+
+        if log:
+            pass
+
+        return {
+            "precision": precision,
+            "recall": recall,
+            "fscore": fscore
+        }
+
+    def get_feature_importance(self) -> dict:
+        feat_to_score = {
+            feature: score
+            for feature, score in zip(
+                self._X_train.columns,
+                self._model.feature_importance_
+            )
+        }
+
+        feat_to_score = dict(
+            sorted(
+                feat_to_score.items(),
+                key=lambda item: item[1],
+                reverse=True
+            )
+        )
+        
+        return feat_to_score
