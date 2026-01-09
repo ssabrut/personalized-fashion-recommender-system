@@ -48,3 +48,17 @@ class QueryTower(Model):
 
         outputs = self.fnn(concatendated_inputs)
         return outputs
+
+class ItemTowerFactory:
+    def __init__(self, dataset: "TwoTowerDataset") -> None:
+        self._dataset = dataset
+
+    def build(self, embed_dim: int = settings.TWO_TOWER_MODEL_EMBEDDING_SIZE) -> "ItemTower":
+        return ItemTower(
+            item_ids=self._dataset.properties["item_ids"],
+            garment_groups=self._dataset.properties["garment_groups"],
+            index_groups=self._dataset.properties["index_groups"],
+            emb_dim=embed_dim
+        )
+
+        
