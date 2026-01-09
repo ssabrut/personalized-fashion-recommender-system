@@ -61,4 +61,55 @@ class ItemTowerFactory:
             emb_dim=embed_dim
         )
 
-        
+class ItemTower(Model):
+    def __init__(self, item_ids: list, garment_groups: list, index_groups: list, emb_dim: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.garment_groups = garment_groups
+        self.index_groups = index_groups
+
+        self.item_embedding = Sequential([
+            layers.StringLookup(vocabulary=item_ids, mask_token=None),
+            layers.Embedding(
+                len(item_ids) + 1,
+                emb_dim
+            )
+        ])
+
+        self.garment_group_tokenizer = layers.StringLookup(
+            vocabulary=garment_groups, mask_token=None
+        )
+
+        self.index_group_tokenizer = layers.StringLookup(
+            vocabulary=index_groups, mask_token=None
+        )
+
+        self.fnn = Sequential(
+            [
+                layers.Dense(emb_dim, activation="relu"),
+                layers.Dense(emb_dim)
+            ]
+        )
+
+    def call(self, inputs):
+        garment_group_embedding = tf.one_hot(
+            self.garment_group_tokenizer(inputs["garment_group_name"]),
+            len(self.garment_groups)
+        )
+
+        index_group_embedding = tf.one_hot(
+            self.index_group_tokenizer(inputs["index_group_name"]),
+            len(self.index_groups)
+        )
+
+        concatenated_inputs = tf.concat(
+            [
+                self.item_embedding(inputs["article_id"]),
+                garment_group_embedding,
+                index_group_embedding
+            ],
+            axis=1
+        )
+
+        outputs = self.fnn(concatenated_inputs)
+        return outputs
