@@ -113,3 +113,48 @@ class ItemTower(Model):
 
         outputs = self.fnn(concatenated_inputs)
         return outputs
+
+class TwoTowerModel(Model):
+    def __init__(self,
+                 query_model: QueryTower,
+                 item_model: ItemTower,
+                 item_ds: tf.data.Dataset,
+                 batch_size: int,
+                 *args, 
+                 **kwargs
+                 ) -> None:
+        super().__init__(*args, **kwargs)
+        self.query_model = query_model
+        self.item_model = item_model
+        self.task = tfrs.tasks.Retrieval(
+            metrics=tfrs.metrics.FactorizedTopK(
+                candidates=item_ds.batch(batch_size).map(self.item_model)
+            )
+        )
+
+    def train_step(self, batch) -> tf.Tensor:
+        with tf.GradientTape() as tape:
+            user_embeddings = self.query_model(batch)
+            item_embeddings = self.item_model(batch)
+            loss = self.task(
+                user_embeddings,
+                item_embeddings,
+                compute_metrics=False
+            )
+
+            regularization_loss = sum(self.losses)
+            total_loss = loss + regularization_loss
+
+        gradients = tape.gradient(total_loss, self.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+
+        metrics = {
+            "loss": loss,
+            "regularization_loss": regularization_loss,
+            "total_loss": total_loss
+        }
+
+        return metrics
+
+    def test_step(self, batch) -> tf.Tensor:
+        pass
