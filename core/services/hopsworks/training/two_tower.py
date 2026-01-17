@@ -157,4 +157,19 @@ class TwoTowerModel(Model):
         return metrics
 
     def test_step(self, batch) -> tf.Tensor:
-        pass
+        user_embeddings = self.query_model(batch)
+        item_embeddings = self.item_model(batch)
+
+        loss = self.task(
+            user_embeddings,
+            item_embeddings,
+            compute_metrics=False
+        )
+
+        regularization_loss = sum(self.losses)
+        total_loss = loss + regularization_loss
+        metrics = {metric.name: metric.result() for metric in self.metrics}
+        metrics["loss"] = loss
+        metrics["regularization_loss"] = regularization_loss
+        metrics["total_loss"] = total_loss
+        return metrics
