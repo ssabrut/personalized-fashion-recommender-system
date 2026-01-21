@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 import tensorflow_recommenders as tfrs
 from keras import Model, Sequential, layers
@@ -173,3 +174,92 @@ class TwoTowerModel(Model):
         metrics["regularization_loss"] = regularization_loss
         metrics["total_loss"] = total_loss
         return metrics
+
+class TwoTowerDataset:
+    def __init__(self, feature_view, batch_size: int) -> None:
+        self._feature_view = feature_view
+        self._batch_size = batch_size
+        self._properties: dict | None = None
+
+        self.llm_embedder = DeepInfraEmbeddings(model_id="Qwen/Qwen3-Embedding-8B")
+
+    @property
+    def query_features(self) -> list[str]:
+        return ["customer_id", "age", "month_sin", "month_cos", "user_vector"]
+
+    @property
+    def candidate_features(self) -> list[str]:
+        return [
+            "article_id",
+            "garment_group_name",
+            "index_group_name",
+        ]
+
+    @property
+    def properties(self) -> dict:
+        assert self._properties is not None, "Call get_train_val_split() first"
+        return self._properties
+
+    def get_items_subset(self):
+        item_df = self.properties["train_df"][self.candidate_features]
+        item_df.drop_duplicates(subset="article_id", inplace=True)
+        item_ds = self.df_to_ds(item_df)
+        return item_ds
+
+    def _generate_user_strings(self, df):
+        """
+        Creates a descriptive string for the LLM to embed.
+        Combine available features or look up user bio/metadata here.
+        """
+        return df.apply(
+            lambda x: f"Customer {x["customer_id"]} Age: {x["age"]}", axis=1
+        ).tolist()
+
+    def _inject_deepinfra_embeddings(self, df):
+        unique_users = df[["customer_id", "age"]].drop_duplicates(subset=["customer_id"])
+        text_data = self._generate_user_strings(unique_users)
+        vectors = self.llm_embedder.embed_documents(text_data)
+        user_id_to_vec = dict(zip(unique_users["customer_id"], vectors))
+        df["user_vector"] = df["customer_id"].map(user_id_to_vec)
+        return df
+
+    def get_train_val_split(self):
+        train_df, val_df, test_df, _, _, _ = (
+            self._feature_view.train_validation_test_split(
+                validation_size=settings.TWO_TOWER_DATASET_VALIDATON_SPLIT_SIZE,
+                test_size=settings.TWO_TOWER_DATASET_TEST_SPLIT_SIZE,
+                description="Retrieval dataset splits",
+            )
+        )
+
+        train_df = self._inject_deepinfra_embeddings(train_df)
+        val_df = self._inject_deepinfra_embeddings(val_df)
+
+        train_ds = (
+            self.df_to_ds(train_df)
+            .batch(self._batch_size)
+            .cache()
+            .shuffle(self._batch_size * 10)
+        )
+        val_ds = self.df_to_ds(val_df).batch(self._batch_size).cache()
+
+        self._properties = {
+            "train_df": train_df,
+            "val_df": val_df,
+            "query_df": train_df[self.query_features],
+            "item_df": train_df[self.candidate_features],
+            "user_ids": train_df["customer_id"].unique().tolist(),
+            "item_ids": train_df["article_id"].unique().tolist(),
+            "garment_groups": train_df["garment_group_name"].unique().tolist(),
+            "index_groups": train_df["index_group_name"].unique().tolist(),
+        }
+
+        return train_ds, val_ds
+
+    def df_to_ds(self, df):
+        data_dict = {col: df[col].values for col in df.columns if col != "user_vector"}
+        if "user_vector" in df.columns:
+            vector_array = np.stack(df["user_vector"].values).astype("float32")
+            data_dict["user_vector"] = vector_array
+
+        return tf.data.Dataset.from_tensor_slices(data_dict)
