@@ -263,3 +263,32 @@ class TwoTowerDataset:
             data_dict["user_vector"] = vector_array
 
         return tf.data.Dataset.from_tensor_slices(data_dict)
+
+class TwoTowerTrainer:
+    def __init__(self, dataset: TwoTowerDataset, model: TwoTowerModel) -> None:
+        self._dataset = dataset
+        self._model = model
+
+    def train(self, train_ds, val_ds):
+        self._initialize_query_model(train_ds)
+
+        optimizer = tf.keras.optimizers.AdamW(
+            weight_decay=settings.TWO_TOWER_WEIGHT_DECAY,
+            learning_rate=settings.TWO_TOWER_LEARNING_RATE,
+        )
+
+        self._model.compile(optimizer=optimizer)
+
+        history = self._model.fit(
+            train_ds,
+            validation_data=val_ds,
+            epochs=settings.TWO_TOWER_NUM_EPOCHS,
+        )
+
+        return history
+
+    def _initialize_query_model(self, train_ds):
+        self._model.query_model.normalized_age.adapt(train_ds.map(lambda x: x["age"]))
+        
+        query_ds = train_ds.take(1) 
+        self._model.query_model(next(iter(query_ds)))
