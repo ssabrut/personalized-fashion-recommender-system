@@ -6,6 +6,7 @@ import streamlit as st
 from PIL import Image, UnidentifiedImageError
 
 from core.services.hopsworks.feature_store import get_feature_store
+from core.services.hopsworks.serving import two_tower_serving
 from core.config import settings
 
 def print_header(text, font_size=22):
@@ -49,7 +50,7 @@ def get_deployments():
     )
 
     query_model_deployment = ms.get_deployment(
-        hopsworks_integration.two_tower_serving.HopsworksQueryModel.deployment_name
+        two_tower_serving.HopsworksQueryModel.deployment_name
     )
 
     ranking_deployment = ms.get_deployment(
