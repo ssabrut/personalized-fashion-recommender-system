@@ -138,3 +138,53 @@ class HopsworksQueryModel:
             ranking_model_type,
             project=project.name,
         )
+
+class HopsworksCandidateModel:
+    def __init__(self, model: ItemTower):
+        self.model = model
+
+    def save_to_local(self, output_path: str = "candidate_model") -> str:
+        tf.saved_model.save(
+            self.model,  # The model to save
+            output_path,  # Path to save the model
+        )
+
+        return output_path
+
+    def register(self, mr, feature_view, item_df):
+        local_model_path = self.save_to_local()
+
+        # Sample a candidate example from the item DataFrame
+        candidate_example = item_df.sample().to_dict("records")
+
+        # Create a tensorflow model for the candidate_model in the Model Registry
+        mr_candidate_model = mr.tensorflow.create_model(
+            name="candidate_model",  # Name of the model
+            description="Model that generates candidate embeddings from item features",  # Description of the model
+            input_example=candidate_example,  # Example input for the model
+            feature_view=feature_view,
+        )
+
+        # Save the candidate_model to the Model Registry
+        mr_candidate_model.save(local_model_path)  # Path to save the model
+
+    @classmethod
+    def download(cls, mr) -> tuple[ItemTower, dict]:
+        models = mr.get_models(name="candidate_model")
+        if len(models) == 0:
+            raise RuntimeError(
+                "No 'candidate_model' found in Hopsworks model registry."
+            )
+        latest_model = max(models, key=lambda m: m.version)
+
+        logger.info(f"Downloading 'candidate_model' version {latest_model.version}")
+        model_path = latest_model.download()
+
+        candidate_model = tf.saved_model.load(model_path)
+
+        candidate_features = [
+            *candidate_model.signatures["serving_default"]
+            .structured_input_signature[-1]
+            .keys()
+        ]
+        return candidate_model, candidate_features
