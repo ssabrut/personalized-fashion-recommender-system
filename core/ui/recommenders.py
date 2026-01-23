@@ -2,10 +2,10 @@ import time
 from datetime import datetime
 
 import streamlit as st
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
-from sentence_transformers import SentenceTransformer
+from langchain_classic.chains.llm import LLMChain
+from langchain_core.prompts import PromptTemplate
+from langchain_community.chat_models import ChatDeepInfra
+from langchain_community.embeddings import DeepInfraEmbeddings
 
 from core.config import settings
 
@@ -178,12 +178,13 @@ def customer_recommendations(
                     st.experimental_rerun()
 
 
-def get_fashion_chain(api_key):
-    model = ChatOpenAI(
-        model_name=settings.OPENAI_MODEL_ID,
+def get_fashion_chain():
+    model = ChatDeepInfra(
+        model=settings.DEEPINFRA_MODEL_ID,
         temperature=0.7,
-        openai_api_key=api_key,
+        deepinfra_api_token=settings.DEEPINFRA_API_TOKEN
     )
+    
     template = """
     You are a fashion recommender for H&M. 
     
@@ -211,6 +212,7 @@ def get_fashion_chain(api_key):
         input_variables=["user_input", "gender"],
         template=template,
     )
+
     fashion_chain = LLMChain(llm=model, prompt=prompt, verbose=True)
     return fashion_chain
 
@@ -317,7 +319,10 @@ def llm_recommendations(articles_fv, api_key, customer_id):
     initialize_llm_state()
 
     tracker = get_tracker()
-    embedding_model = SentenceTransformer(settings.FEATURES_EMBEDDING_MODEL_ID)
+    embedding_model = DeepInfraEmbeddings(
+        model_id=settings.FEATURE_EMBEDDING_MODEL_ID,
+        deepinfra_api_token=settings.DEEPINFRA_API_TOKEN
+    )
 
     # Gender selection
     gender = st.selectbox("Select gender:", ("Male", "Female"))
@@ -457,6 +462,6 @@ def llm_recommendations(articles_fv, api_key, customer_id):
 
 def get_similar_items(description, embedding_model, articles_fv):
     """Get similar items based on description embedding"""
-    description_embedding = embedding_model.encode(description)
+    description_embedding = embedding_model.embed_query(description)
 
     return articles_fv.find_neighbors(description_embedding, k=25)
